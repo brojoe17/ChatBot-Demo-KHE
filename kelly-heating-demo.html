@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelly Heating & Electric - Chat Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .demo-container {
+            text-align: center;
+            color: white;
+            max-width: 500px;
+        }
+        .demo-container h1 { font-size: 1.8rem; margin-bottom: 10px; }
+        .demo-container p { opacity: 0.8; margin-bottom: 30px; }
+        .arrow { font-size: 2rem; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🔥 Kelly Heating & Electric</h1>
+        <p>Try the AI assistant demo below!</p>
+        <div class="arrow">↘</div>
+    </div>
+
+    <script>
+    const CONFIG = {
+        companyName: "Kelly Heating & Electric",
+        primaryColor: "#1e3a5f",
+        accentColor: "#e85d04",
+        
+        greeting: "Hi! 👋 Need help with heating, cooling, or electrical? I'm here to help.",
+        placeholder: "Ask about our services...",
+        
+        quickActions: ["Schedule Service", "Emergency Help", "Get a Quote"],
+        
+        phone: "715-832-6909",
+        email: "info@kellyheatingandelectric.com",
+        address: "2730 Melby St, Eau Claire, WI 54703",
+        hours: "Mon-Fri 7:30am-5pm",
+        website: "https://kellyheatingandelectric.com",
+        
+        knowledge: {
+            services: `We provide:
+• Heating - furnaces, boilers, heat pumps
+• Cooling - AC, heat pumps, Bryant systems
+• Electrical - residential & commercial
+• Air Quality - purifiers, humidifiers
+
+What do you need help with?`,
+
+            pricing: `We offer free estimates on all installations.
+
+Service calls start at $89. Call {phone} or fill out the form and we'll get back to you quickly.`,
+
+            contact: `📞 {phone}
+📍 {address}
+🕐 {hours}
+🚨 24/7 emergency service available
+
+Ready to schedule?`,
+
+            hours: `Office: {hours}
+Emergency: 24/7
+
+For emergencies, call {phone} now.`,
+
+            about: `Family-owned since 1997. 25+ years serving Eau Claire & Chippewa Valley. Bryant Medal of Excellence winner. 100% satisfaction guarantee.`,
+
+            heating: `Heating services:
+• Gas & oil furnaces
+• Boilers
+• Heat pumps
+• Geothermal systems
+
+Need a repair or new installation?`,
+
+            cooling: `Cooling services:
+• Central AC
+• Heat pumps
+• Bryant systems
+• Maintenance plans
+
+AC not working? We can help.`,
+
+            electrical: `Electrical services:
+• Residential wiring
+• Commercial electrical
+• Service upgrades
+• Low-voltage work
+
+What electrical work do you need?`,
+
+            default: `I can help with:
+• Heating & cooling
+• Electrical services
+• Scheduling & quotes
+• Emergency service
+
+What do you need?`
+        },
+
+        leadTriggers: ["quote", "estimate", "appointment", "schedule", "contact me", "call me", "get in touch", "come out", "install"],
+        
+        emergencyKeywords: ["emergency", "urgent", "no heat", "no ac", "no air", "gas smell", "flooding", "sparking", "smoke", "broken"],
+        emergencyResponse: `🚨 EMERGENCY? Call now: {phone}
+
+We have 24/7 emergency service. A technician can be dispatched immediately.`
+    };
+    </script>
+
+    <style>
+        #chatbot-widget { position: fixed; bottom: 20px; right: 20px; z-index: 999999; font-family: system-ui, sans-serif; }
+        .cb-toggle { width: 60px; height: 60px; border-radius: 50%; background: var(--cb-primary); border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+        .cb-toggle:hover { transform: scale(1.05); }
+        .cb-toggle svg { width: 28px; height: 28px; fill: white; }
+        .cb-window { position: absolute; bottom: 75px; right: 0; width: 360px; height: 500px; max-height: calc(100vh - 100px); background: #fff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; opacity: 0; visibility: hidden; transform: translateY(10px) scale(0.95); transition: all 0.2s ease; }
+        .cb-window.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+        .cb-header { background: var(--cb-primary); color: white; padding: 16px; display: flex; align-items: center; gap: 12px; }
+        .cb-avatar { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .cb-header-text h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+        .cb-header-text p { font-size: 12px; opacity: 0.9; }
+        .cb-close { margin-left: auto; background: none; border: none; color: white; cursor: pointer; padding: 5px; opacity: 0.8; }
+        .cb-close:hover { opacity: 1; }
+        .cb-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #f9fafb; }
+        .cb-msg { display: flex; gap: 8px; max-width: 85%; animation: msgIn 0.2s ease; }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .cb-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+        .cb-msg-bubble { padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
+        .cb-msg.bot .cb-msg-bubble { background: white; color: #1f2937; border: 1px solid #e5e7eb; border-bottom-left-radius: 4px; }
+        .cb-msg.user .cb-msg-bubble { background: var(--cb-accent); color: white; border-bottom-right-radius: 4px; }
+        .cb-typing { display: flex; gap: 4px; padding: 12px 16px; background: white; border-radius: 16px; width: fit-content; border: 1px solid #e5e7eb; }
+        .cb-typing span { width: 6px; height: 6px; background: #9ca3af; border-radius: 50%; animation: typing 1s infinite; }
+        .cb-typing span:nth-child(2) { animation-delay: 0.15s; }
+        .cb-typing span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes typing { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+        .cb-input-area { padding: 12px; background: white; border-top: 1px solid #e5e7eb; }
+        .cb-input-row { display: flex; gap: 8px; }
+        .cb-input { flex: 1; border: 1px solid #e5e7eb; border-radius: 24px; padding: 10px 16px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .cb-input:focus { border-color: var(--cb-primary); }
+        .cb-send { width: 40px; height: 40px; border-radius: 50%; background: var(--cb-primary); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
+        .cb-send:hover { opacity: 0.9; }
+        .cb-send svg { width: 18px; height: 18px; fill: white; }
+        .cb-quick { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .cb-quick-btn { padding: 6px 12px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 16px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .cb-quick-btn:hover { background: var(--cb-primary); color: white; border-color: var(--cb-primary); }
+        .cb-lead-form { padding: 16px; background: #fef9c3; border-radius: 12px; margin: 8px 0; }
+        .cb-lead-form h4 { font-size: 14px; margin-bottom: 12px; color: #1f2937; }
+        .cb-lead-form input { width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .cb-lead-form button { width: 100%; padding: 10px; background: var(--cb-primary); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        @media (max-width: 480px) { .cb-window { width: calc(100vw - 30px); height: calc(100vh - 100px); right: -5px; } }
+    </style>
+
+    <div id="chatbot-widget" style="--cb-primary: #1e3a5f; --cb-accent: #e85d04">
+        <button class="cb-toggle" id="cbToggle">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+        </button>
+        <div class="cb-window" id="cbWindow">
+            <div class="cb-header">
+                <div class="cb-avatar">🔥</div>
+                <div class="cb-header-text">
+                    <h3>Kelly Heating & Electric</h3>
+                    <p>Online • Here to help</p>
+                </div>
+                <button class="cb-close" id="cbClose">✕</button>
+            </div>
+            <div class="cb-messages" id="cbMessages"></div>
+            <div class="cb-input-area">
+                <div class="cb-input-row">
+                    <input type="text" class="cb-input" id="cbInput" placeholder="Ask about our services...">
+                    <button class="cb-send" id="cbSend">
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
+                </div>
+                <div class="cb-quick" id="cbQuick"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const widget = document.getElementById('chatbot-widget');
+        const toggle = document.getElementById('cbToggle');
+        const window_ = document.getElementById('cbWindow');
+        const messages = document.getElementById('cbMessages');
+        const input = document.getElementById('cbInput');
+        const send = document.getElementById('cbSend');
+        const close = document.getElementById('cbClose');
+        const quick = document.getElementById('cbQuick');
+        
+        let isOpen = false, isTyping = false;
+        
+        CONFIG.quickActions.forEach(action => {
+            const btn = document.createElement('button');
+            btn.className = 'cb-quick-btn';
+            btn.textContent = action;
+            btn.onclick = () => { input.value = action; sendMessage(); };
+            quick.appendChild(btn);
+        });
+        
+        toggle.onclick = () => {
+            isOpen = !isOpen;
+            window_.classList.toggle('open', isOpen);
+            if (isOpen && messages.children.length === 0) {
+                setTimeout(() => addMessage('bot', CONFIG.greeting), 300);
+            }
+        };
+        close.onclick = () => { isOpen = false; window_.classList.remove('open'); };
+        send.onclick = sendMessage;
+        input.onkeydown = (e) => { if (e.key === 'Enter') sendMessage(); };
+        
+        function sendMessage() {
+            const msg = input.value.trim();
+            if (!msg || isTyping) return;
+            input.value = '';
+            addMessage('user', msg);
+            quick.style.display = 'none';
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('bot', generateResponse(msg));
+                if (shouldShowLeadForm(msg)) setTimeout(showLeadForm, 500);
+            }, 600 + Math.random() * 400);
+        }
+        
+        function addMessage(role, content) {
+            const div = document.createElement('div');
+            div.className = `cb-msg ${role}`;
+            content = content.replace(/{phone}/g, CONFIG.phone).replace(/{email}/g, CONFIG.email).replace(/{address}/g, CONFIG.address).replace(/{hours}/g, CONFIG.hours);
+            div.innerHTML = `<div class="cb-msg-bubble">${content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>`;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        function showTyping() {
+            isTyping = true;
+            const div = document.createElement('div');
+            div.className = 'cb-msg bot'; div.id = 'cbTyping';
+            div.innerHTML = '<div class="cb-typing"><span></span><span></span><span></span></div>';
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        function hideTyping() { isTyping = false; document.getElementById('cbTyping')?.remove(); }
+        
+        function generateResponse(msg) {
+            const lower = msg.toLowerCase();
+            if (CONFIG.emergencyKeywords.some(kw => lower.includes(kw))) return CONFIG.emergencyResponse;
+            if (lower.includes('heat') || lower.includes('furnace') || lower.includes('boiler')) return CONFIG.knowledge.heating;
+            if (lower.includes('cool') || lower.includes('ac') || lower.includes('air condition')) return CONFIG.knowledge.cooling;
+            if (lower.includes('electric') || lower.includes('wiring') || lower.includes('outlet')) return CONFIG.knowledge.electrical;
+            if (lower.includes('service') || lower.includes('offer') || lower.includes('do you')) return CONFIG.knowledge.services;
+            if (lower.includes('price') || lower.includes('cost') || lower.includes('how much') || lower.includes('quote') || lower.includes('estimate')) return CONFIG.knowledge.pricing;
+            if (lower.includes('contact') || lower.includes('phone') || lower.includes('reach') || lower.includes('call') || lower.includes('schedule')) return CONFIG.knowledge.contact;
+            if (lower.includes('hour') || lower.includes('open') || lower.includes('when')) return CONFIG.knowledge.hours;
+            if (lower.includes('about') || lower.includes('who') || lower.includes('company')) return CONFIG.knowledge.about;
+            return CONFIG.knowledge.default;
+        }
+        
+        function shouldShowLeadForm(msg) {
+            return CONFIG.leadTriggers.some(t => msg.toLowerCase().includes(t));
+        }
+        
+        function showLeadForm() {
+            const form = document.createElement('div');
+            form.className = 'cb-lead-form';
+            form.innerHTML = `<h4>📅 Schedule Service</h4><input type="text" id="leadName" placeholder="Your name"><input type="email" id="leadEmail" placeholder="Email"><input type="tel" id="leadPhone" placeholder="Phone"><button id="leadSubmit">Request Callback</button>`;
+            messages.appendChild(form);
+            messages.scrollTop = messages.scrollHeight;
+            document.getElementById('leadSubmit').onclick = () => {
+                const name = document.getElementById('leadName').value;
+                const email = document.getElementById('leadEmail').value;
+                if (!name || !email) { alert('Please enter name and email'); return; }
+                form.remove();
+                addMessage('bot', `Thanks ${name}! We'll call you back shortly. 👍`);
+                console.log('LEAD:', { name, email, phone: document.getElementById('leadPhone').value });
+            };
+        }
+    })();
+    </script>
+</body>
+</html>
